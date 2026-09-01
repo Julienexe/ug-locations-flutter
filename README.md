@@ -1,6 +1,6 @@
 # ug_locations
 
-**A fast, offline Flutter/Dart library for Uganda's administrative hierarchy.**
+**A fast, offline Flutter/Dart library for Uganda's administrative hierarchy forked from [`ug_locations`](https://github.com/NatumanyaGuy/ug-locations).**
 
 Instantly search villages, get complete administrative paths, and traverse Uganda's location hierarchy from village → parish → subcounty → county → district — all offline, backed by a bundled SQLite database.
 
