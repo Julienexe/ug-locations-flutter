@@ -1,0 +1,3 @@
+# Only needed to regenerate assets/ug_locations.db; not needed by consumers
+# of the published package, and it's large (17MB).
+tool/source_data/

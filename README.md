@@ -1,213 +1,202 @@
-# ug-locations
+# ug_locations
 
-**The fastest, most accurate way to work with Uganda's administrative hierarchy in JavaScript/TypeScript.**
+**A fast, offline Flutter/Dart library for Uganda's administrative hierarchy.**
 
-Instantly search villages, get complete administrative paths, and traverse Uganda's location hierarchy from village → parish → subcounty → county → district.
+Instantly search villages, get complete administrative paths, and traverse Uganda's location hierarchy from village → parish → subcounty → county → district — all offline, backed by a bundled SQLite database.
 
-[![npm version](https://img.shields.io/npm/v/ug-locations.svg)](https://www.npmjs.com/package/ug-locations)
+[![pub package](https://img.shields.io/pub/v/ug_locations.svg)](https://pub.dev/packages/ug_locations)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 ## ✨ Features
 
-- 🚀 **Zero runtime data fetching** — ~7MB optimized data bundled with package
-- ⚡ **O(1) village lookups** — instant location resolution
-- 🔍 **Smart search** — fuzzy matching with relevance ranking
+- 📦 **Fully offline** — bundled SQLite database, no network calls
+- 🔍 **Smart search** — substring/prefix matching with relevance ranking
 - 🗺️ **Complete hierarchy** — traverse all administrative levels
-- 📦 **Tree-shakeable** — only bundle what you use
-- 💪 **TypeScript native** — full type safety included
+- 💪 **Dart native** — full null-safety, typed models
 
 ## 📦 Installation
 
 ```bash
-npm install ug-locations
-```
-
-```bash
-yarn add ug-locations
-```
-
-```bash
-pnpm add ug-locations
-```
-
-```bash
-bun add ug-locations
+flutter pub add ug_locations
 ```
 
 ## 🚀 Quick Start
 
-```typescript
-import ug from "ug-locations";
+```dart
+import 'package:ug_locations/ug_locations.dart';
 
-// Get complete location hierarchy from a village name
-const location = ug.getLocationByVillage("KASAMBYA I");
-console.log(location);
-// {
-//   village: "KASAMBYA I",
-//   parish: "KATEREIGA",
-//   subcounty: "BUHANIKA",
-//   constituency: "BUGAHYA COUNTY",
-//   district: "HOIMA"
-// }
+Future<void> main() async {
+  final ug = await UgandaLocations.getInstance();
 
-// Get human-readable path
-console.log(ug.getPath("KASAMBYA I"));
-// "HOIMA → BUHANIKA → KATEREIGA → KASAMBYA I"
+  // Get complete location hierarchy from a village name
+  final location = await ug.getLocationByVillage('KASAMBYA I');
+  print(location);
+  // UgandaLocation(village: KASAMBYA I, parish: KATEREIGA,
+  //   subcounty: BUHANIKA, constituency: BUGAHYA COUNTY, district: HOIMA)
+
+  // Get human-readable path
+  print(await ug.getPath('KASAMBYA I'));
+  // "HOIMA → BUHANIKA → KATEREIGA → KASAMBYA I"
+}
 ```
+
+## ⚙️ Platform setup
+
+- **Android / iOS**: works out of the box.
+- **Desktop (Linux/macOS/Windows) or plain `dart test`**: `sqflite` requires the FFI implementation on these platforms. Before calling any `ug_locations` method, initialize it once:
+
+  ```dart
+  import 'package:sqflite_common_ffi/sqflite_ffi.dart';
+
+  void main() {
+    sqfliteFfiInit();
+    databaseFactory = databaseFactoryFfi;
+    runApp(const MyApp());
+  }
+  ```
+
+- **Web**: not supported in this release. `sqflite` has no built-in web implementation; if you need web support, see [`sqflite_common_ffi_web`](https://pub.dev/packages/sqflite_common_ffi_web) as a starting point (not tested by this package) or use [`ug_locations`](https://github.com/NatumanyaGuy/ug-locations) the original typescript package that this is based off of.
 
 ## 📚 Usage Examples
 
 ### Working with Districts
 
-```typescript
+```dart
 // Get all districts in Uganda
-const districts = ug.getDistricts();
-console.log(districts.slice(0, 5));
-// ["ABIM", "ADJUMANI", "AGAGO", "ALEBTONG", "AMOLATAR"]
+final districts = await ug.getDistricts();
+print(districts.take(5));
+// (ABIM, ADJUMANI, AGAGO, ALEBTONG, AMOLATAR)
 
 // List all subcounties in a district
-const subcounties = ug.getSubcountiesInDistrict("HOIMA");
-console.log(subcounties);
-// ["BOMBO", "BUHANIKA", "BULINDI TOWN COUNCIL", "BURARU", ...]
+final subcounties = await ug.getSubcountiesInDistrict('HOIMA');
+print(subcounties);
+// [BOMBO, BUHANIKA, BULINDI TOWN COUNCIL, BURARU, ...]
 ```
 
 ### Traversing the Hierarchy
 
-```typescript
+```dart
 // Get all parishes in a subcounty
-const parishes = ug.getParishesInSubcounty("HOIMA", "BUHANIKA");
-console.log(parishes);
-// ["KATEREIGA", "KYABIGAMBIRE", ...]
+final parishes = await ug.getParishesInSubcounty('HOIMA', 'BUHANIKA');
+print(parishes);
+// [KATEREIGA, KIKEREGE, ...]
 
 // Get all villages in a parish
-const villages = ug.getVillagesInParish("HOIMA", "BUHANIKA", "KATEREIGA");
-console.log(villages);
-// ["KASAMBYA I", "KASAMBYA II", ...]
+final villages = await ug.getVillagesInParish('HOIMA', 'BUHANIKA', 'KATEREIGA');
+print(villages);
+// [KASAMBYA I, KATEREIGA I, KATEREIGA II, KASAMBYA II, KISUGA, KIKABURA]
 
 // Get parent location of a village
-const parent = ug.getParent("KASAMBYA I");
-console.log(parent);
-// { parish: "KATEREIGA", subcounty: "BUHANIKA", district: "HOIMA" }
+final parent = await ug.getParent('KASAMBYA I');
+print(parent);
+// UgandaLocationParent(parish: KATEREIGA, subcounty: BUHANIKA, district: HOIMA)
 ```
 
 ### Searching Locations
 
-```typescript
+```dart
 // Search across all administrative levels
-const results = ug.search("KABANDA");
-results.slice(0, 3).forEach((loc) => {
-  console.log(`${loc.village} (${loc.district})`);
-});
+final results = await ug.search('KABANDA');
+for (final loc in results.take(3)) {
+  print('${loc.village} (${loc.district})');
+}
 // KABANDA (NTUNGAMO)
-// KABANDA (MBARARA)
-// KABANDA (RUKUNGIRI)
+// KABANDA A (KYANKWANZI)
+// KABANDA B (KYANKWANZI)
 
 // Limit search results
-const topResults = ug.search("kaba", { limit: 5 });
-console.log(topResults.length); // 5
+final topResults = await ug.search('kaba', limit: 5);
+print(topResults.length); // 5
 
 // Search prioritizes exact matches and start-with matches
-const kampalaResults = ug.search("KAMPALA");
+final kampalaResults = await ug.search('KAMPALA');
 // Villages/locations starting with "KAMPALA" appear first
 ```
 
 ### Building Location Forms
 
-```typescript
-// Example: Create a cascading location selector
-function buildLocationSelector() {
-  const districts = ug.getDistricts();
+```dart
+// Example: cascading location selector
+Future<void> buildLocationSelector() async {
+  final districts = await ug.getDistricts();
 
-  // User selects district
-  const selectedDistrict = "KAMPALA";
-  const subcounties = ug.getSubcountiesInDistrict(selectedDistrict);
+  final selectedDistrict = 'KAMPALA';
+  final subcounties = await ug.getSubcountiesInDistrict(selectedDistrict);
 
-  // User selects subcounty
-  const selectedSubcounty = "CENTRAL DIVISION";
-  const parishes = ug.getParishesInSubcounty(
-    selectedDistrict,
-    selectedSubcounty
-  );
+  final selectedSubcounty = 'CENTRAL DIVISION';
+  final parishes = await ug.getParishesInSubcounty(selectedDistrict, selectedSubcounty);
 
-  // User selects parish
-  const selectedParish = "INDUSTRIAL AREA";
-  const villages = ug.getVillagesInParish(
+  final selectedParish = 'INDUSTRIAL AREA';
+  final villages = await ug.getVillagesInParish(
     selectedDistrict,
     selectedSubcounty,
-    selectedParish
+    selectedParish,
   );
-
-  return { districts, subcounties, parishes, villages };
 }
 ```
 
+See `example/lib/main.dart` for a full working Flutter app demonstrating both a search box and a cascading district → subcounty → parish → village selector.
+
 ### Validating User Input
 
-```typescript
-// Verify if a location exists
-function validateLocation(villageName: string): boolean {
-  const location = ug.getLocationByVillage(villageName);
-  return location !== null;
+```dart
+Future<bool> validateLocation(String villageName) async {
+  final location = await ug.getLocationByVillage(villageName);
+  return location != null;
 }
 
-// Get suggestions for partial input
-function getSuggestions(partial: string) {
-  return ug.search(partial, { limit: 10 });
+Future<List<UgandaLocation>> getSuggestions(String partial) {
+  return ug.search(partial, limit: 10);
 }
-
-console.log(validateLocation("KASAMBYA I")); // true
-console.log(validateLocation("FAKE VILLAGE")); // false
 ```
 
 ## 📖 API Reference
 
-| Method                                             | Parameters                                                      | Returns                                 | Description                                                       |
-| -------------------------------------------------- | --------------------------------------------------------------- | --------------------------------------- | ----------------------------------------------------------------- |
-| `getDistricts()`                                   | -                                                               | `string[]`                              | Returns all 135+ districts in Uganda                              |
-| `getLocationByVillage(village)`                    | `village: string`                                               | `UgandaLocation \| null`                | Get complete hierarchy for a village (O(1) lookup)                |
-| `getPath(village)`                                 | `village: string`                                               | `string \| null`                        | Returns formatted path: "District → Subcounty → Parish → Village" |
-| `search(query, options?)`                          | `query: string`<br/>`options?: { limit?: number }`              | `UgandaLocation[]`                      | Search across all levels with fuzzy matching. Default limit: 50   |
-| `getSubcountiesInDistrict(district)`               | `district: string`                                              | `string[]`                              | Lists all subcounties in a district                               |
-| `getParishesInSubcounty(district, subcounty)`      | `district: string`<br/>`subcounty: string`                      | `string[]`                              | Lists all parishes in a subcounty                                 |
-| `getVillagesInParish(district, subcounty, parish)` | `district: string`<br/>`subcounty: string`<br/>`parish: string` | `string[]`                              | Lists all villages in a parish                                    |
-| `getParent(village)`                               | `village: string`                                               | `{parish, subcounty, district} \| null` | Returns parent location information                               |
+| Method                                              | Returns                          | Description                                                        |
+| ---------------------------------------------------- | --------------------------------- | -------------------------------------------------------------------- |
+| `UgandaLocations.getInstance()`                     | `Future<UgandaLocations>`        | Opens (and caches) the shared database instance                    |
+| `getDistricts()`                                    | `Future<List<String>>`           | Returns all 145 districts                                          |
+| `getLocationByVillage(village)`                     | `Future<UgandaLocation?>`        | Full hierarchy for a village                                       |
+| `getPath(village)`                                  | `Future<String?>`                | Formatted path: "District → Subcounty → Parish → Village"          |
+| `search(query, {limit = 50})`                       | `Future<List<UgandaLocation>>`   | Search across all levels, ranked by relevance                      |
+| `getSubcountiesInDistrict(district)`                | `Future<List<String>>`           | Subcounties in a district                                          |
+| `getParishesInSubcounty(district, subcounty)`       | `Future<List<String>>`           | Parishes in a subcounty                                            |
+| `getVillagesInParish(district, subcounty, parish)`  | `Future<List<String>>`           | Villages in a parish                                                |
+| `getParent(village)`                                | `Future<UgandaLocationParent?>`  | Parent parish/subcounty/district of a village                      |
 
 ### Type Definitions
 
-```typescript
-type UgandaLocation = {
-  village: string;
-  parish: string;
-  subcounty: string;
-  constituency?: string;
-  district: string;
-};
+```dart
+class UgandaLocation {
+  final String village;
+  final String parish;
+  final String subcounty;
+  final String? constituency;
+  final String district;
+}
+
+class UgandaLocationParent {
+  final String parish;
+  final String subcounty;
+  final String district;
+}
 ```
-
-## ⚡ Performance
-
-| Operation               | Time    | Complexity        |
-| ----------------------- | ------- | ----------------- |
-| Village → Full Location | ~0.01ms | O(1) hash lookup  |
-| Search 10,000+ villages | ~8ms    | Optimized scoring |
-| Package initialization  | ~15ms   | Cold start (Bun)  |
-| Bundle size             | ~7MB    | Includes all data |
 
 ## 🗺️ Data Coverage
 
-- **135+ Districts**
-- **10,000+ Villages**
+- **145 Districts**
+- **55,000+ unique villages**
 - **Complete administrative hierarchy** (Village → Parish → Subcounty → Constituency → District)
 
 ## 📊 Data Source
 
-Based on Uganda Electoral Commission Administrative Units - 2022
+Based on Uganda Electoral Commission Administrative Units - 2022.
 
 **Source Document:** [Uganda Electoral Commission Administrative Units PDF (July 2022)](https://www.ec.or.ug/election/administrative-units-uganda-july-2022)
 
 ## 🙏 Acknowledgments
 
-Special thanks to [@gxnsamuel](https://github.com/gxnsamuel/UG-AU-DS-2022) for providing the JSON extract of the Uganda Electoral Commission Administrative Units PDF.
+This package is a Dart/Flutter port of the JavaScript/TypeScript [`ug-locations`](https://github.com/NatumanyaGuy/ug-locations) npm package by Natumanya Guy, reimplemented from scratch with a SQLite-backed storage layer for Flutter apps. Thanks also to [@gxnsamuel](https://github.com/gxnsamuel/UG-AU-DS-2022) for providing the original JSON extract of the Uganda Electoral Commission Administrative Units PDF that both packages' data is derived from.
 
 ## 🤝 Contributing
 
@@ -215,11 +204,11 @@ Contributions are welcome! Please feel free to submit a Pull Request.
 
 ## 📄 License
 
-MIT © [Natumanya Guy](https://github.com/NatumanyaGuy)
+MIT
 
 ## 🐛 Issues
 
-Found a bug or have a feature request? [Open an issue](https://github.com/NatumanyaGuy/ug-locations/issues)
+Found a bug or have a feature request? Open an issue on the repository.
 
 ---
 

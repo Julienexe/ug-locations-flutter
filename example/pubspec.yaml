@@ -1,0 +1,23 @@
+name: ug_locations_example
+description: Example Flutter app demoing the ug_locations package.
+publish_to: 'none'
+version: 0.1.0
+
+environment:
+  sdk: '>=3.4.0 <4.0.0'
+  flutter: '>=3.22.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+  ug_locations:
+    path: ../
+  sqflite_common_ffi: ^2.4.2
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  lints: ^5.0.0
+
+flutter:
+  uses-material-design: true

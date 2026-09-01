@@ -1,31 +1,26 @@
-# dependencies (bun install)
-node_modules
+# Dart/Flutter
+.dart_tool/
+.packages
+build/
+.flutter-plugins
+.flutter-plugins-dependencies
+.pub-cache/
+.pub/
+pubspec.lock
+*.iml
+*.g.dart
 
-# output
-out
-dist
-*.tgz
+# example app pub cache
+example/.dart_tool/
+example/build/
+example/pubspec.lock
 
 # code coverage
-coverage
+coverage/
 *.lcov
 
-# logs
-logs
-_.log
-report.[0-9]_.[0-9]_.[0-9]_.[0-9]_.json
-
-# dotenv environment variable files
-.env
-.env.development.local
-.env.test.local
-.env.production.local
-.env.local
-
 # caches
-.eslintcache
 .cache
-*.tsbuildinfo
 
 # IntelliJ based IDEs
 .idea

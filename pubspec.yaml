@@ -1,0 +1,40 @@
+name: ug_locations
+description: >
+  A fast, offline Flutter/Dart library for Uganda's administrative-unit
+  hierarchy - village, parish, subcounty, constituency, and district lookup
+  with fuzzy search, backed by a bundled SQLite database.
+version: 0.1.0
+homepage: https://github.com/Julienexe/ug-locations-flutter
+repository: https://github.com/Julienexe/ug-locations-flutter
+issue_tracker: https://github.com/Julienexe/ug-locations-flutter/issues
+topics:
+  - uganda
+  - locations
+  - administrative-units
+  - sqlite
+  - offline
+
+environment:
+  sdk: '>=3.4.0 <4.0.0'
+  flutter: '>=3.22.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+  sqflite: ^2.4.3
+  path_provider: ^2.1.6
+  path: ^1.9.1
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  sqflite_common_ffi: ^2.4.2
+  sqlite3: ^3.5.2
+  lints: ^5.0.0
+
+flutter:
+  assets:
+    - assets/ug_locations.db
+
+false_secrets:
+  - /assets/ug_locations.db
