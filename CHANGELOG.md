@@ -1,3 +1,7 @@
+## 0.1.1
+
+- Update README documentation.
+
 ## 0.1.0
 
 - Initial release: a Dart/Flutter port of the [`ug-locations`](https://github.com/NatumanyaGuy/ug-locations) npm package.

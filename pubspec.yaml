@@ -3,7 +3,7 @@ description: >
   A fast, offline Flutter/Dart library for Uganda's administrative-unit
   hierarchy - village, parish, subcounty, constituency, and district lookup
   with fuzzy search, backed by a bundled SQLite database.
-version: 0.1.0
+version: 0.1.1
 homepage: https://github.com/Julienexe/ug-locations-flutter
 repository: https://github.com/Julienexe/ug-locations-flutter
 issue_tracker: https://github.com/Julienexe/ug-locations-flutter/issues
