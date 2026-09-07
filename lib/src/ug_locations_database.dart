@@ -1,53 +1,32 @@
-import 'dart:io';
-import 'dart:typed_data';
+import 'query_executor.dart';
+import 'ug_locations_database_io.dart'
+    if (dart.library.js_interop) 'web/ug_locations_database_web.dart'
+    as impl;
 
-import 'package:flutter/services.dart' show rootBundle;
-import 'package:path/path.dart' as p;
-import 'package:path_provider/path_provider.dart';
-import 'package:sqflite/sqflite.dart';
-
-/// Handles locating, copying, and opening the bundled `ug_locations.db`
-/// SQLite asset.
+/// Handles locating and opening the bundled `ug_locations.db` SQLite asset.
 ///
-/// The database ships as a Flutter asset, which cannot be queried in place -
-/// it must first be copied to a writable location on disk.
+/// The actual implementation differs by platform: Android/iOS/desktop copy
+/// the asset to disk and open it via `sqflite`; web loads the asset's bytes
+/// directly into an in-memory `sqlite3` wasm database. Both are hidden
+/// behind [QueryExecutor], so callers don't need to know which one is in
+/// use.
 class UgLocationsDatabase {
   UgLocationsDatabase._();
 
-  static const String _assetPath = 'packages/ug_locations/assets/ug_locations.db';
-  static const String _dbFileName = 'ug_locations.db';
-
-  /// Copies the bundled database asset to the app's support directory (if
-  /// not already present) and opens it read-only.
+  /// Opens the bundled database asset, doing whatever platform-specific
+  /// setup is needed first (see the class doc).
   ///
-  /// Requires a [databaseFactory] to already be configured - this is the
-  /// default on Android/iOS via `sqflite`. On desktop or in plain `dart
-  /// test` runs, call `sqfliteFfiInit()` and set
-  /// `databaseFactory = databaseFactoryFfi` (from `sqflite_common_ffi`)
-  /// before calling this.
-  static Future<Database> open() async {
-    final Directory dir = await getApplicationSupportDirectory();
-    final String dbPath = p.join(dir.path, _dbFileName);
-
-    if (!await File(dbPath).exists()) {
-      final ByteData bytes = await rootBundle.load(_assetPath);
-      await File(dbPath).writeAsBytes(
-        bytes.buffer.asUint8List(bytes.offsetInBytes, bytes.lengthInBytes),
-        flush: true,
-      );
-    }
-
-    return openFromPath(dbPath);
-  }
+  /// Requires a `databaseFactory` to already be configured on
+  /// Android/iOS/desktop - this is the default on Android/iOS via `sqflite`.
+  /// On desktop or in plain `dart test` runs, call `sqfliteFfiInit()` and
+  /// set `databaseFactory = databaseFactoryFfi` (from `sqflite_common_ffi`)
+  /// before calling this. Not applicable on web.
+  static Future<QueryExecutor> open() => impl.openDatabase();
 
   /// Opens a database directly from [path], bypassing the asset-copy step.
   ///
   /// Intended for tests that want to point straight at
-  /// `assets/ug_locations.db` on disk.
-  static Future<Database> openFromPath(String path) {
-    return databaseFactory.openDatabase(
-      path,
-      options: OpenDatabaseOptions(readOnly: true),
-    );
-  }
+  /// `assets/ug_locations.db` on disk. Not supported on web, since there is
+  /// no on-disk path to open - use [open] instead.
+  static Future<QueryExecutor> openFromPath(String path) => impl.openDatabaseFromPath(path);
 }

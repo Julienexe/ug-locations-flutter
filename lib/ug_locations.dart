@@ -6,3 +6,5 @@ library;
 export 'src/ug_location.dart' show UgandaLocation, UgandaLocationParent;
 export 'src/ug_locations_database.dart' show UgLocationsDatabase;
 export 'src/ug_locations_repository.dart' show UgandaLocations;
+export 'src/widgets/location_picker.dart' show LocationPicker;
+export 'src/widgets/location_search_field.dart' show LocationSearchField;

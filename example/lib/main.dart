@@ -1,13 +1,17 @@
-import 'dart:io';
+import 'dart:io' show Platform;
 
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 import 'package:ug_locations/ug_locations.dart';
 
 void main() {
   // Desktop platforms need the FFI-based sqflite implementation; Android/iOS
-  // work out of the box with the default sqflite plugin.
-  if (Platform.isLinux || Platform.isWindows || Platform.isMacOS) {
+  // work out of the box with the default sqflite plugin; web needs neither
+  // (ug_locations uses its own sqlite3-wasm backend there). `Platform` isn't
+  // usable on web at all - it throws on first access - so `kIsWeb` must be
+  // checked first to short-circuit before touching it.
+  if (!kIsWeb && (Platform.isLinux || Platform.isWindows || Platform.isMacOS)) {
     sqfliteFfiInit();
     databaseFactory = databaseFactoryFfi;
   }
@@ -129,17 +133,56 @@ class _HomePageState extends State<HomePage> {
     return Scaffold(
       appBar: AppBar(title: const Text('ug_locations example')),
       body: DefaultTabController(
-        length: 2,
+        length: 3,
         child: Column(
           children: [
-            const TabBar(tabs: [Tab(text: 'Search'), Tab(text: 'Cascading selector')]),
+            const TabBar(
+              tabs: [
+                Tab(text: 'Search'),
+                Tab(text: 'Cascading selector'),
+                Tab(text: 'Bundled widgets'),
+              ],
+            ),
             Expanded(
               child: TabBarView(
-                children: [_buildSearchTab(), _buildSelectorTab()],
+                children: [_buildSearchTab(), _buildSelectorTab(), _buildBundledWidgetsTab()],
               ),
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  /// Demonstrates the ready-made [LocationSearchField] and [LocationPicker]
+  /// widgets exported by the package, as an alternative to the hand-rolled
+  /// UI in the other two tabs.
+  Widget _buildBundledWidgetsTab() {
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Text('LocationSearchField', style: Theme.of(context).textTheme.titleMedium),
+          const SizedBox(height: 8),
+          LocationSearchField(
+            onSelected: (loc) {
+              ScaffoldMessenger.of(
+                context,
+              ).showSnackBar(SnackBar(content: Text('Selected: ${loc.village}')));
+            },
+          ),
+          const SizedBox(height: 24),
+          Text('LocationPicker', style: Theme.of(context).textTheme.titleMedium),
+          const SizedBox(height: 8),
+          LocationPicker(
+            onSelected: (loc) {
+              ScaffoldMessenger.of(
+                context,
+              ).showSnackBar(SnackBar(content: Text('Selected: ${loc.village}')));
+            },
+          ),
+        ],
       ),
     );
   }

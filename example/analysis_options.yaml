@@ -13,4 +13,3 @@ linter:
   rules:
     - prefer_single_quotes
     - always_declare_return_types
-    - public_member_api_docs

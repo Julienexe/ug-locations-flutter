@@ -93,3 +93,5 @@ Don't dedupe the underlying state list itself if you also display a count (e.g. 
 ## Data facts
 
 145 districts, 55,000+ villages, source: Uganda Electoral Commission Administrative Units (July 2022). Dart/Flutter port of the [`ug-locations`](https://github.com/NatumanyaGuy/ug-locations) npm package, SQLite-backed instead of JSON-in-memory.
+
+Static snapshot — no automatic update mechanism; changes to administrative units since July 2022 are not reflected.

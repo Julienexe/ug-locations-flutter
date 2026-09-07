@@ -110,6 +110,8 @@ class UgandaLocationParent {
 
 145 districts, 55,000+ villages, sourced from the [Uganda Electoral Commission Administrative Units PDF (July 2022)](https://www.ec.or.ug/election/administrative-units-uganda-july-2022).
 
+**Data freshness**: this is a static snapshot of the July 2022 list. There is no automatic update mechanism today, so administrative changes since then (new districts, renamed or split units, etc.) are not reflected. If you need current boundaries, cross-check against the Electoral Commission's latest publication.
+
 ## Acknowledgments
 
 Dart/Flutter port of the [`ug-locations`](https://github.com/NatumanyaGuy/ug-locations) npm package by Natumanya Guy, reimplemented with a SQLite-backed storage layer. JSON data extract courtesy of [@gxnsamuel](https://github.com/gxnsamuel/UG-AU-DS-2022).

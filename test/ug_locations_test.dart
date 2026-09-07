@@ -111,16 +111,18 @@ void main() {
     test('finds matches across all administrative levels', () async {
       final results = await ug.search('KABANDA');
       expect(results, isNotEmpty);
-      expect(
-        results.every(
-          (r) =>
-              r.village.contains('KABANDA') ||
-              r.district.contains('KABANDA') ||
-              r.subcounty.contains('KABANDA') ||
-              r.parish.contains('KABANDA'),
-        ),
-        isTrue,
+      // Substring/prefix matches on the literal query rank first; a
+      // typo-tolerant fallback may fill any remaining slots up to `limit`
+      // with close-but-inexact matches, so only the leading exact matches
+      // are asserted here.
+      final exactMatches = results.where(
+        (r) =>
+            r.village.contains('KABANDA') ||
+            r.district.contains('KABANDA') ||
+            r.subcounty.contains('KABANDA') ||
+            r.parish.contains('KABANDA'),
       );
+      expect(exactMatches, isNotEmpty);
     });
 
     test('ranks exact village match first', () async {
@@ -141,6 +143,16 @@ void main() {
     test('is case-insensitive', () async {
       final results = await ug.search('kasambya i');
       expect(results.first.village, 'KASAMBYA I');
+    });
+
+    test('typo-tolerant fallback finds a village with one substituted letter', () async {
+      final results = await ug.search('KASOMBYA I');
+      expect(results.map((r) => r.village), contains('KASAMBYA I'));
+    });
+
+    test('typo-tolerant fallback finds a village with one missing letter', () async {
+      final results = await ug.search('KASABYA I');
+      expect(results.map((r) => r.village), contains('KASAMBYA I'));
     });
   });
 }
