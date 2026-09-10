@@ -100,8 +100,7 @@ LocationPicker(
 )
 ```
 
-![LocationPicker, default mode](doc/screenshots/location_picker-false.jpg)
-<!-- TODO: replace with a screenshot of LocationPicker in its default 4-level mode. -->
+![LocationPicker, default mode](https://raw.githubusercontent.com/Julienexe/ug-locations-flutter/master/doc/screenshots/location_picker-false.jpg)
 
 Pass `includeRegionHierarchy: true` to prepend Region and Sub-region dropdowns above District, narrowing the District list to the chosen sub-region:
 
@@ -112,8 +111,7 @@ LocationPicker(
 )
 ```
 
-![LocationPicker, with region hierarchy](doc/screenshots/location_picker-false.jpg)
-<!-- TODO: replace with a screenshot of LocationPicker with includeRegionHierarchy: true. -->
+![LocationPicker, with region hierarchy](https://raw.githubusercontent.com/Julienexe/ug-locations-flutter/master/doc/screenshots/location_picker-true.jpg)
 
 ### LocationSearchField
 
@@ -126,8 +124,7 @@ LocationSearchField(
 )
 ```
 
-![LocationSearchField suggestions](doc/screenshots/search_field.jpg)
-<!-- TODO: replace with a screenshot of LocationSearchField showing suggestions. -->
+![LocationSearchField suggestions](https://raw.githubusercontent.com/Julienexe/ug-locations-flutter/master/doc/screenshots/search_field.jpg)
 
 ## API Reference
 
