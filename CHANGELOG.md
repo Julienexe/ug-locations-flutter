@@ -1,3 +1,6 @@
+## 0.2.1
+- Fixed screenshot rendering in package readme
+
 ## 0.2.0
 
 - Added `LocationPicker` (cascading District → Subcounty → Parish → Village selector) and `LocationSearchField` (autocomplete search field) — ready-made Flutter widgets exported from `package:ug_locations/ug_locations.dart`, so consumers no longer have to hand-roll UI on top of the lookup API. See the example app's "Bundled widgets" tab.
