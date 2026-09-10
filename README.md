@@ -12,6 +12,7 @@ Search villages, get complete administrative paths, and traverse village → par
 - Fully offline — bundled SQLite database, no network calls
 - Smart search — substring/prefix matching with relevance ranking
 - Complete hierarchy traversal across all administrative levels
+- Ready-made widgets — `LocationPicker` (cascading selector) and `LocationSearchField` (autocomplete) — no UI to hand-roll
 - Full null-safety, typed models
 
 ## Installation
@@ -73,9 +74,9 @@ for (final loc in results) {
 }
 ```
 
-Common patterns this API supports: cascading district → subcounty → parish → village selectors, and village-name input validation via `getLocationByVillage(name) != null`. See `example/lib/main.dart` for a full working Flutter app with both.
+Common patterns this API supports: cascading district → subcounty → parish → village selectors, and village-name input validation via `getLocationByVillage(name) != null`. See `example/lib/main.dart` for a full working Flutter app — it has a "Bundled widgets" tab demonstrating both widgets below, alongside hand-rolled equivalents built directly on the API.
 
-### Region and sub-region (optional)
+### Region and sub-region lookups
 
 Every `UgandaLocation` also carries `region` and `subRegion`, and three lookup methods let you drive a region-first cascade if you want one:
 
@@ -85,7 +86,24 @@ final subRegions = await ug.getSubRegionsInRegion('WESTERN'); // BUNYORO, ANKOLE
 final districts = await ug.getDistrictsInSubRegion('BUNYORO'); // HOIMA, ...
 ```
 
-`LocationPicker` stays a 4-level District → Subcounty → Parish → Village picker by default; pass `includeRegionHierarchy: true` to prepend Region and Sub-region dropdowns:
+## Widgets
+
+Two ready-made Flutter widgets ship alongside the lookup API, so you don't have to hand-roll cascading dropdowns or an autocomplete field yourself. Both open the shared `UgandaLocations` instance automatically (via `UgandaLocations.getInstance()`); pass `locations: someFuture` to inject a specific instance instead, e.g. in tests.
+
+### LocationPicker
+
+A cascading District → Subcounty → Parish → Village selector. Four `DropdownButtonFormField`s, each populated from the previous selection; `onSelected` fires once a village is chosen, with the full resolved `UgandaLocation`.
+
+```dart
+LocationPicker(
+  onSelected: (location) => print(location.village),
+)
+```
+
+![LocationPicker, default mode](doc/screenshots/location_picker_default.png)
+<!-- TODO: replace with a screenshot of LocationPicker in its default 4-level mode. -->
+
+Pass `includeRegionHierarchy: true` to prepend Region and Sub-region dropdowns above District, narrowing the District list to the chosen sub-region:
 
 ```dart
 LocationPicker(
@@ -93,6 +111,23 @@ LocationPicker(
   onSelected: (location) => print(location.village),
 )
 ```
+
+![LocationPicker, with region hierarchy](doc/screenshots/location_picker_region.png)
+<!-- TODO: replace with a screenshot of LocationPicker with includeRegionHierarchy: true. -->
+
+### LocationSearchField
+
+A text field that searches villages, parishes, subcounties, and districts as the user types (via `UgandaLocations.search`), showing a ranked suggestions list to pick from.
+
+```dart
+LocationSearchField(
+  onSelected: (location) => print(location.village),
+  limit: 5, // suggestions fetched per keystroke, default 3
+)
+```
+
+![LocationSearchField suggestions](doc/screenshots/location_search_field.png)
+<!-- TODO: replace with a screenshot of LocationSearchField showing suggestions. -->
 
 ## API Reference
 

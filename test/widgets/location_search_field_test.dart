@@ -40,7 +40,17 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('KASAMBYA I'), findsWidgets);
-    expect(find.text('KATEREIGA → BUHANIKA → HOIMA'), findsOneWidget);
+
+    // Scope the subtitle check to the tile titled exactly "KASAMBYA I" -
+    // "KASAMBYA II" is also in KATEREIGA/BUHANIKA/HOIMA and matches the
+    // same query (it's a text-prefix match), so a bare subtitle-text finder
+    // would find two identical matches.
+    final kasambyaITile = find.byWidgetPredicate(
+      (widget) => widget is ListTile && (widget.title as Text).data == 'KASAMBYA I',
+    );
+    expect(kasambyaITile, findsOneWidget);
+    final tile = tester.widget<ListTile>(kasambyaITile);
+    expect((tile.subtitle as Text).data, 'KATEREIGA → BUHANIKA → HOIMA');
 
     // Submitting the field selects the top-ranked (highlighted) suggestion.
     await tester.testTextInput.receiveAction(TextInputAction.done);

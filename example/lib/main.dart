@@ -42,6 +42,10 @@ class _HomePageState extends State<HomePage> {
   UgandaLocations? _ug;
   List<UgandaLocation> _searchResults = <UgandaLocation>[];
 
+  bool _includeRegionHierarchy = false;
+  UgandaLocation? _searchFieldSelection;
+  UgandaLocation? _pickerSelection;
+
   List<String> _districts = <String>[];
   List<String> _subcounties = <String>[];
   List<String> _parishes = <String>[];
@@ -156,7 +160,8 @@ class _HomePageState extends State<HomePage> {
 
   /// Demonstrates the ready-made [LocationSearchField] and [LocationPicker]
   /// widgets exported by the package, as an alternative to the hand-rolled
-  /// UI in the other two tabs.
+  /// UI in the other two tabs. Selections are kept on screen (not just in a
+  /// transient snackbar) so this tab is screenshot-friendly.
   Widget _buildBundledWidgetsTab() {
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16),
@@ -166,22 +171,32 @@ class _HomePageState extends State<HomePage> {
           Text('LocationSearchField', style: Theme.of(context).textTheme.titleMedium),
           const SizedBox(height: 8),
           LocationSearchField(
-            onSelected: (loc) {
-              ScaffoldMessenger.of(
-                context,
-              ).showSnackBar(SnackBar(content: Text('Selected: ${loc.village}')));
-            },
+            onSelected: (loc) => setState(() => _searchFieldSelection = loc),
           ),
+          const SizedBox(height: 8),
+          _SelectionSummary(location: _searchFieldSelection),
           const SizedBox(height: 24),
           Text('LocationPicker', style: Theme.of(context).textTheme.titleMedium),
-          const SizedBox(height: 8),
-          LocationPicker(
-            onSelected: (loc) {
-              ScaffoldMessenger.of(
-                context,
-              ).showSnackBar(SnackBar(content: Text('Selected: ${loc.village}')));
-            },
+          SwitchListTile(
+            contentPadding: EdgeInsets.zero,
+            title: const Text('Include region / sub-region levels'),
+            value: _includeRegionHierarchy,
+            onChanged: (value) => setState(() {
+              _includeRegionHierarchy = value;
+              _pickerSelection = null;
+            }),
           ),
+          const SizedBox(height: 8),
+          // Rebuild with a new key when the toggle flips so LocationPicker's
+          // internal cascade state resets cleanly instead of carrying over
+          // selections made under the other mode.
+          LocationPicker(
+            key: ValueKey(_includeRegionHierarchy),
+            includeRegionHierarchy: _includeRegionHierarchy,
+            onSelected: (loc) => setState(() => _pickerSelection = loc),
+          ),
+          const SizedBox(height: 8),
+          _SelectionSummary(location: _pickerSelection),
         ],
       ),
     );
@@ -263,6 +278,44 @@ class _HomePageState extends State<HomePage> {
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+/// Renders the full hierarchy of a selected [UgandaLocation] as a card, or a
+/// placeholder prompt if nothing has been selected yet.
+class _SelectionSummary extends StatelessWidget {
+  const _SelectionSummary({required this.location});
+
+  final UgandaLocation? location;
+
+  @override
+  Widget build(BuildContext context) {
+    final loc = location;
+    return Card(
+      margin: EdgeInsets.zero,
+      child: Padding(
+        padding: const EdgeInsets.all(12),
+        child: loc == null
+            ? Text(
+                'No selection yet',
+                style: Theme.of(
+                  context,
+                ).textTheme.bodyMedium?.copyWith(color: Theme.of(context).hintColor),
+              )
+            : Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(loc.village, style: Theme.of(context).textTheme.titleSmall),
+                  Text('Parish: ${loc.parish}'),
+                  Text('Subcounty: ${loc.subcounty}'),
+                  Text('County: ${loc.county ?? '—'}'),
+                  Text('District: ${loc.district}'),
+                  Text('Sub-region: ${loc.subRegion ?? '—'}'),
+                  Text('Region: ${loc.region ?? '—'}'),
+                ],
+              ),
       ),
     );
   }

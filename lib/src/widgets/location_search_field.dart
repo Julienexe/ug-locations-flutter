@@ -93,8 +93,6 @@ class _LocationSearchFieldState extends State<LocationSearchField> {
             Iterable<UgandaLocation> options,
           ) {
             final List<UgandaLocation> optionsList = options.toList();
-            // ignore: avoid_print
-            print('DEBUG optionsViewBuilder called with ${optionsList.length} options');
             return Align(
               alignment: Alignment.topLeft,
               child: Material(
