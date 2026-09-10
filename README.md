@@ -100,7 +100,7 @@ LocationPicker(
 )
 ```
 
-![LocationPicker, default mode](doc/screenshots/location_picker_default.png)
+![LocationPicker, default mode](doc/screenshots/location_picker-false.jpg)
 <!-- TODO: replace with a screenshot of LocationPicker in its default 4-level mode. -->
 
 Pass `includeRegionHierarchy: true` to prepend Region and Sub-region dropdowns above District, narrowing the District list to the chosen sub-region:
@@ -112,7 +112,7 @@ LocationPicker(
 )
 ```
 
-![LocationPicker, with region hierarchy](doc/screenshots/location_picker_region.png)
+![LocationPicker, with region hierarchy](doc/screenshots/location_picker-false.jpg)
 <!-- TODO: replace with a screenshot of LocationPicker with includeRegionHierarchy: true. -->
 
 ### LocationSearchField
@@ -126,7 +126,7 @@ LocationSearchField(
 )
 ```
 
-![LocationSearchField suggestions](doc/screenshots/location_search_field.png)
+![LocationSearchField suggestions](doc/screenshots/search_field.jpg)
 <!-- TODO: replace with a screenshot of LocationSearchField showing suggestions. -->
 
 ## API Reference
