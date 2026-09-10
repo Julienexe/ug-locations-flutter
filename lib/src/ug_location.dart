@@ -8,19 +8,24 @@ class UgandaLocation {
     required this.village,
     required this.parish,
     required this.subcounty,
-    this.constituency,
+    this.county,
     required this.district,
+    this.region,
+    this.subRegion,
   });
 
   /// Builds a [UgandaLocation] from a `village`/`parish`/`subcounty`/
-  /// `constituency`/`district`-keyed map, e.g. a raw SQLite row.
+  /// `county`/`district`/`region`/`sub_region`-keyed map, e.g. a raw SQLite
+  /// row.
   factory UgandaLocation.fromMap(Map<String, Object?> map) {
     return UgandaLocation(
       village: map['village'] as String,
       parish: map['parish'] as String,
       subcounty: map['subcounty'] as String,
-      constituency: map['constituency'] as String?,
+      county: map['county'] as String?,
       district: map['district'] as String,
+      region: map['region'] as String?,
+      subRegion: map['sub_region'] as String?,
     );
   }
 
@@ -38,22 +43,32 @@ class UgandaLocation {
   /// The subcounty the parish belongs to.
   final String subcounty;
 
-  /// The electoral constituency covering this location, if known.
-  final String? constituency;
+  /// The county covering this location, if known. `null` for locations
+  /// inside a city division, which aren't organized into counties.
+  final String? county;
 
   /// The district the subcounty belongs to.
   final String district;
 
-  /// Converts this location to a `village`/`parish`/`subcounty`/
-  /// `constituency`/`district`-keyed map, suitable for [fromMap] or storage
-  /// (e.g. Firestore, `SharedPreferences`).
+  /// The region the district belongs to (Central, Eastern, Northern, or
+  /// Western), if known.
+  final String? region;
+
+  /// The sub-region the district belongs to, if known.
+  final String? subRegion;
+
+  /// Converts this location to a `village`/`parish`/`subcounty`/`county`/
+  /// `district`/`region`/`subRegion`-keyed map, suitable for [fromMap] or
+  /// storage (e.g. Firestore, `SharedPreferences`).
   Map<String, Object?> toMap() {
     return <String, Object?>{
       'village': village,
       'parish': parish,
       'subcounty': subcounty,
-      'constituency': constituency,
+      'county': county,
       'district': district,
+      'region': region,
+      'sub_region': subRegion,
     };
   }
 
@@ -66,17 +81,21 @@ class UgandaLocation {
         other.village == village &&
         other.parish == parish &&
         other.subcounty == subcounty &&
-        other.constituency == constituency &&
-        other.district == district;
+        other.county == county &&
+        other.district == district &&
+        other.region == region &&
+        other.subRegion == subRegion;
   }
 
   @override
-  int get hashCode => Object.hash(village, parish, subcounty, constituency, district);
+  int get hashCode =>
+      Object.hash(village, parish, subcounty, county, district, region, subRegion);
 
   @override
   String toString() {
     return 'UgandaLocation(village: $village, parish: $parish, '
-        'subcounty: $subcounty, constituency: $constituency, district: $district)';
+        'subcounty: $subcounty, county: $county, district: $district, '
+        'region: $region, subRegion: $subRegion)';
   }
 }
 

@@ -77,4 +77,51 @@ void main() {
     expect(selected!.subcounty, 'BUHANIKA');
     expect(selected!.district, 'HOIMA');
   });
+
+  testWidgets('default picker has no Region/Sub-region dropdowns', (tester) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: LocationPicker(locations: Future.value(ug), onSelected: (_) {}),
+        ),
+      ),
+    );
+    await tester.pump();
+    await pumpUntilFound(tester, find.widgetWithText(DropdownButtonFormField<String>, 'District'));
+
+    expect(find.widgetWithText(DropdownButtonFormField<String>, 'Region'), findsNothing);
+    expect(find.widgetWithText(DropdownButtonFormField<String>, 'Sub-region'), findsNothing);
+  });
+
+  testWidgets(
+    'includeRegionHierarchy cascades region -> sub-region -> district -> ... -> village',
+    (tester) async {
+      UgandaLocation? selected;
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: LocationPicker(
+              locations: Future.value(ug),
+              includeRegionHierarchy: true,
+              onSelected: (loc) => selected = loc,
+            ),
+          ),
+        ),
+      );
+      await tester.pump();
+      await pumpUntilFound(tester, find.widgetWithText(DropdownButtonFormField<String>, 'Region'));
+
+      await selectDropdownValue(tester, 'Region', 'WESTERN');
+      await selectDropdownValue(tester, 'Sub-region', 'BUNYORO');
+      await selectDropdownValue(tester, 'District', 'HOIMA');
+      await selectDropdownValue(tester, 'Subcounty', 'BUHANIKA');
+      await selectDropdownValue(tester, 'Parish', 'KATEREIGA');
+      await selectDropdownValue(tester, 'Village', 'KASAMBYA I');
+
+      expect(selected, isNotNull);
+      expect(selected!.village, 'KASAMBYA I');
+      expect(selected!.region, 'WESTERN');
+      expect(selected!.subRegion, 'BUNYORO');
+    },
+  );
 }

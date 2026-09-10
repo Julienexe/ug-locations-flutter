@@ -2,3 +2,4 @@
 # of the published package, and it's large (17MB).
 tool/source_data/
 build/
+uganda-locations-full.csv

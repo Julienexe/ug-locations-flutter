@@ -1,13 +1,13 @@
 ---
 name: ug-locations-flutter
-description: "Offline Flutter/Dart lookup and fuzzy search over Uganda's administrative-unit hierarchy (village -> parish -> subcounty -> constituency -> district), backed by a bundled SQLite database. Use when working on the ug_locations package itself, its example app, or any app that consumes it — for API usage, platform setup, cascading location selectors, or debugging duplicate-value dropdown crashes."
+description: "Offline Flutter/Dart lookup and fuzzy search over Uganda's administrative-unit hierarchy (village -> parish -> subcounty -> county -> district -> sub-region -> region), backed by a bundled SQLite database. Use when working on the ug_locations package itself, its example app, or any app that consumes it — for API usage, platform setup, cascading location selectors, or debugging duplicate-value dropdown crashes."
 metadata:
   version: 0.1.0
 ---
 
 # ug_locations (Flutter/Dart)
 
-Offline lookup + fuzzy search over Uganda's administrative hierarchy: **village → parish → subcounty → constituency → district**. Data is bundled as a read-only SQLite asset (`assets/ug_locations.db`), sourced from the Uganda Electoral Commission's 2022 Administrative Units.
+Offline lookup + fuzzy search over Uganda's administrative hierarchy: **village → parish → subcounty → county → district → sub-region → region**. Data is bundled as a read-only SQLite asset (`assets/ug_locations.db`), built from `uganda-locations-full.csv` — a current administrative-units dataset that superseded the package's original 2022 Electoral Commission snapshot.
 
 ## When to Use
 
@@ -23,7 +23,10 @@ Entry point: `UgandaLocations.getInstance()` — opens (and caches) the shared D
 
 | Method | Returns | Notes |
 |---|---|---|
-| `getDistricts()` | `Future<List<String>>` | All 145 districts, source order, no duplicates. |
+| `getDistricts()` | `Future<List<String>>` | All 146 districts, source order, no duplicates. |
+| `getRegions()` | `Future<List<String>>` | All 4 regions, alphabetically sorted. |
+| `getSubRegionsInRegion(region)` | `Future<List<String>>` | Alphabetically sorted. |
+| `getDistrictsInSubRegion(subRegion)` | `Future<List<String>>` | Source order. |
 | `getSubcountiesInDistrict(district)` | `Future<List<String>>` | Alphabetically sorted. |
 | `getParishesInSubcounty(district, subcounty)` | `Future<List<String>>` | Source order — **duplicate names are preserved on purpose** (mirrors the original data / JS package). |
 | `getVillagesInParish(district, subcounty, parish)` | `Future<List<String>>` | Source order, duplicates preserved. |
@@ -38,12 +41,14 @@ Types (`lib/src/ug_location.dart`):
 ```dart
 class UgandaLocation {
   final String village, parish, subcounty, district;
-  final String? constituency;
+  final String? county, region, subRegion;
 }
 class UgandaLocationParent {
   final String parish, subcounty, district;
 }
 ```
+
+`region`/`subRegion` are opt-in at the UI layer: `LocationPicker` stays a 4-level District → Subcounty → Parish → Village picker by default; pass `includeRegionHierarchy: true` to prepend Region → Sub-region dropdowns (see `lib/src/widgets/location_picker.dart`).
 
 ## Platform setup (required outside Android/iOS)
 
@@ -61,11 +66,11 @@ void main() {
 }
 ```
 
-Web is **not supported** (no bundled `sqflite` web backend).
+Web works out of the box, no setup required — `sqflite` has no web backend, so on web the package transparently opens the bundled database via a `sqlite3`-wasm backend (`lib/src/web/`) instead of `sqflite`.
 
 ## Known gotcha: duplicate values break dropdowns
 
-`getParishesInSubcounty` and `getVillagesInParish` deliberately preserve duplicate entries when the source data has them (e.g. district ARUA / subcounty ARIVU lists the parish "ARIVU" twice). Feeding such a list straight into `DropdownMenuItem`s throws:
+`getParishesInSubcounty` and `getVillagesInParish` deliberately preserve duplicate entries if the source data ever has them (raw, non-deduped order). Feeding such a list straight into `DropdownMenuItem`s throws:
 
 ```
 'items == null || items.isEmpty || ... items.where((item) => item.value == value).length == 1'
@@ -87,11 +92,11 @@ Don't dedupe the underlying state list itself if you also display a count (e.g. 
 - Tests (`test/ug_locations_test.dart`) open the DB directly via `UgLocationsDatabase.openFromPath('assets/ug_locations.db')` + `UgandaLocations.fromDatabase(db)`, bypassing the asset-copy path — use this pattern for new tests.
 - `setUpAll` must call `sqfliteFfiInit()` / set `databaseFactory = databaseFactoryFfi` first.
 - To inspect the bundled DB ad hoc (no `sqlite3` CLI available in this environment), write a small Dart script using `sqflite_common_ffi` and run it with `dart run` from within `example/` (it has the FFI dependency); pass an **absolute** path to the `.db` file.
-- Regenerating the database: `tool/build_database.dart` builds `assets/ug_locations.db` from `tool/source_data/data-optimized.json`.
+- Regenerating the database is a two-step pipeline: `tool/build_source_json.dart` builds `tool/source_data/data-optimized.json` from `uganda-locations-full.csv` (run first), then `tool/build_database.dart` builds `assets/ug_locations.db` from that JSON.
 - The example app (`example/lib/main.dart`) demonstrates both a search box and a cascading district → subcounty → parish → village selector — check it for reference UI patterns.
 
 ## Data facts
 
-145 districts, 55,000+ villages, source: Uganda Electoral Commission Administrative Units (July 2022). Dart/Flutter port of the [`ug-locations`](https://github.com/NatumanyaGuy/ug-locations) npm package, SQLite-backed instead of JSON-in-memory.
+146 districts, 52,000+ unique villages across 71,000+ administrative records, source: `uganda-locations-full.csv` (a current administrative-units dataset covering region/sub-region/district/county/subcounty/parish/village). Dart/Flutter port of the [`ug-locations`](https://github.com/NatumanyaGuy/ug-locations) npm package, SQLite-backed instead of JSON-in-memory.
 
-Static snapshot — no automatic update mechanism; changes to administrative units since July 2022 are not reflected.
+Static snapshot — no automatic update mechanism; re-running the two-step regeneration pipeline above against a newer CSV is the only way to refresh it.

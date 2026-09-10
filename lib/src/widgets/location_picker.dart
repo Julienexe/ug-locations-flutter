@@ -4,7 +4,8 @@ import '../ug_location.dart';
 import '../ug_locations_repository.dart';
 
 /// A cascading district -> subcounty -> parish -> village picker backed by
-/// [UgandaLocations].
+/// [UgandaLocations]. Pass [includeRegionHierarchy]: true to prepend
+/// region -> sub-region levels above district.
 ///
 /// By default it opens the shared [UgandaLocations] instance (via
 /// [UgandaLocations.getInstance]); pass [locations] to inject a specific
@@ -17,7 +18,12 @@ import '../ug_locations_repository.dart';
 /// ```
 class LocationPicker extends StatefulWidget {
   /// Creates a [LocationPicker].
-  const LocationPicker({super.key, required this.onSelected, this.locations});
+  const LocationPicker({
+    super.key,
+    required this.onSelected,
+    this.locations,
+    this.includeRegionHierarchy = false,
+  });
 
   /// Called with the full hierarchy once the user has selected a village.
   final ValueChanged<UgandaLocation> onSelected;
@@ -26,6 +32,12 @@ class LocationPicker extends StatefulWidget {
   /// singleton from [UgandaLocations.getInstance].
   final Future<UgandaLocations>? locations;
 
+  /// Whether to prepend Region and Sub-region dropdowns above District,
+  /// narrowing the District list to the chosen sub-region. Defaults to
+  /// `false`, which keeps the picker to its original four levels (District
+  /// -> Subcounty -> Parish -> Village).
+  final bool includeRegionHierarchy;
+
   @override
   State<LocationPicker> createState() => _LocationPickerState();
 }
@@ -33,11 +45,15 @@ class LocationPicker extends StatefulWidget {
 class _LocationPickerState extends State<LocationPicker> {
   UgandaLocations? _ug;
 
+  List<String> _regions = <String>[];
+  List<String> _subRegions = <String>[];
   List<String> _districts = <String>[];
   List<String> _subcounties = <String>[];
   List<String> _parishes = <String>[];
   List<String> _villages = <String>[];
 
+  String? _region;
+  String? _subRegion;
   String? _district;
   String? _subcounty;
   String? _parish;
@@ -51,12 +67,61 @@ class _LocationPickerState extends State<LocationPicker> {
 
   Future<void> _init() async {
     final UgandaLocations ug = await (widget.locations ?? UgandaLocations.getInstance());
+    if (widget.includeRegionHierarchy) {
+      final List<String> regions = await ug.getRegions();
+      if (!mounted) return;
+      setState(() {
+        _ug = ug;
+        _regions = regions;
+      });
+      return;
+    }
     final List<String> districts = await ug.getDistricts();
     if (!mounted) return;
     setState(() {
       _ug = ug;
       _districts = districts;
     });
+  }
+
+  Future<void> _onRegionChanged(String? region) async {
+    setState(() {
+      _region = region;
+      _subRegion = null;
+      _district = null;
+      _subcounty = null;
+      _parish = null;
+      _village = null;
+      _subRegions = <String>[];
+      _districts = <String>[];
+      _subcounties = <String>[];
+      _parishes = <String>[];
+      _villages = <String>[];
+    });
+    final UgandaLocations? ug = _ug;
+    if (ug == null || region == null) return;
+    final List<String> subRegions = await ug.getSubRegionsInRegion(region);
+    if (!mounted) return;
+    setState(() => _subRegions = subRegions);
+  }
+
+  Future<void> _onSubRegionChanged(String? subRegion) async {
+    setState(() {
+      _subRegion = subRegion;
+      _district = null;
+      _subcounty = null;
+      _parish = null;
+      _village = null;
+      _districts = <String>[];
+      _subcounties = <String>[];
+      _parishes = <String>[];
+      _villages = <String>[];
+    });
+    final UgandaLocations? ug = _ug;
+    if (ug == null || subRegion == null) return;
+    final List<String> districts = await ug.getDistrictsInSubRegion(subRegion);
+    if (!mounted) return;
+    setState(() => _districts = districts);
   }
 
   Future<void> _onDistrictChanged(String? district) async {
@@ -121,13 +186,34 @@ class _LocationPickerState extends State<LocationPicker> {
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: <Widget>[
+        if (widget.includeRegionHierarchy) ...<Widget>[
+          DropdownButtonFormField<String>(
+            initialValue: _region,
+            decoration: const InputDecoration(labelText: 'Region'),
+            items: <DropdownMenuItem<String>>[
+              for (final String r in _regions.toSet()) DropdownMenuItem(value: r, child: Text(r)),
+            ],
+            onChanged: _onRegionChanged,
+          ),
+          DropdownButtonFormField<String>(
+            initialValue: _subRegion,
+            decoration: const InputDecoration(labelText: 'Sub-region'),
+            items: <DropdownMenuItem<String>>[
+              for (final String s in _subRegions.toSet())
+                DropdownMenuItem(value: s, child: Text(s)),
+            ],
+            onChanged: _subRegions.isEmpty ? null : _onSubRegionChanged,
+          ),
+        ],
         DropdownButtonFormField<String>(
           initialValue: _district,
           decoration: const InputDecoration(labelText: 'District'),
           items: <DropdownMenuItem<String>>[
             for (final String d in _districts.toSet()) DropdownMenuItem(value: d, child: Text(d)),
           ],
-          onChanged: _onDistrictChanged,
+          onChanged: widget.includeRegionHierarchy && _districts.isEmpty
+              ? null
+              : _onDistrictChanged,
         ),
         DropdownButtonFormField<String>(
           initialValue: _subcounty,

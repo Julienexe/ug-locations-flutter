@@ -20,11 +20,41 @@ void main() {
   });
 
   group('getDistricts', () {
-    test('returns all 145 districts including known ones', () async {
+    test('returns all 146 districts including known ones', () async {
       final districts = await ug.getDistricts();
-      expect(districts.length, 145);
+      expect(districts.length, 146);
       expect(districts, contains('HOIMA'));
       expect(districts, contains('KAMPALA'));
+    });
+  });
+
+  group('getRegions', () {
+    test('returns all 4 regions, sorted', () async {
+      final regions = await ug.getRegions();
+      expect(regions, ['CENTRAL', 'EASTERN', 'NORTHERN', 'WESTERN']);
+    });
+  });
+
+  group('getSubRegionsInRegion', () {
+    test('lists sub-regions for a known region, sorted', () async {
+      final subRegions = await ug.getSubRegionsInRegion('WESTERN');
+      expect(subRegions, contains('BUNYORO'));
+      expect(subRegions, orderedEquals(List<String>.from(subRegions)..sort()));
+    });
+
+    test('returns empty list for unknown region', () async {
+      expect(await ug.getSubRegionsInRegion('NOT A REGION'), isEmpty);
+    });
+  });
+
+  group('getDistrictsInSubRegion', () {
+    test('lists districts for a known sub-region', () async {
+      final districts = await ug.getDistrictsInSubRegion('BUNYORO');
+      expect(districts, contains('HOIMA'));
+    });
+
+    test('returns empty list for unknown sub-region', () async {
+      expect(await ug.getDistrictsInSubRegion('NOT A SUB-REGION'), isEmpty);
     });
   });
 
@@ -35,7 +65,9 @@ void main() {
       expect(loc!.district, 'HOIMA');
       expect(loc.subcounty, 'BUHANIKA');
       expect(loc.parish, 'KATEREIGA');
-      expect(loc.constituency, 'BUGAHYA COUNTY');
+      expect(loc.county, 'BUGAHYA COUNTY');
+      expect(loc.region, 'WESTERN');
+      expect(loc.subRegion, 'BUNYORO');
     });
 
     test('is case-insensitive', () async {
@@ -88,9 +120,8 @@ void main() {
       expect(parishes, contains('KATEREIGA'));
     });
 
-    test('preserves duplicate parish names from source data', () async {
-      final parishes = await ug.getParishesInSubcounty('HOIMA', 'KITOBA');
-      expect(parishes.where((p) => p == 'KITOBA').length, 2);
+    test('returns empty list for unknown subcounty', () async {
+      expect(await ug.getParishesInSubcounty('HOIMA', 'NOT A SUBCOUNTY'), isEmpty);
     });
   });
 

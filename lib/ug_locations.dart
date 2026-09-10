@@ -1,6 +1,6 @@
 /// Offline lookup and fuzzy search over Uganda's administrative-unit
-/// hierarchy (village -> parish -> subcounty -> constituency -> district),
-/// backed by a bundled SQLite database.
+/// hierarchy (village -> parish -> subcounty -> county -> district ->
+/// sub-region -> region), backed by a bundled SQLite database.
 library;
 
 export 'src/ug_location.dart' show UgandaLocation, UgandaLocationParent;

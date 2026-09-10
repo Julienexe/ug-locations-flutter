@@ -1,6 +1,6 @@
 # ug_locations
 
-A fast, offline Flutter/Dart library for Uganda's administrative hierarchy, forked from [`ug_locations`](https://github.com/NatumanyaGuy/ug-locations).
+A fast, offline Flutter/Dart library for Uganda's administrative hierarchy, forked from [`ug_locations`](https://github.com/NatumanyaGuy/ug-locations), with data sourced from the [`uganda`](https://github.com/kakandemanwell/uganda) npm package by [kakandemanwell](https://github.com/kakandemanwell) (browsable at [uganda-omega.vercel.app](https://uganda-omega.vercel.app/)).
 
 Search villages, get complete administrative paths, and traverse village → parish → subcounty → county → district — fully offline via a bundled SQLite database.
 
@@ -30,7 +30,8 @@ Future<void> main() async {
 
   final location = await ug.getLocationByVillage('KASAMBYA I');
   // UgandaLocation(village: KASAMBYA I, parish: KATEREIGA,
-  //   subcounty: BUHANIKA, constituency: BUGAHYA COUNTY, district: HOIMA)
+  //   subcounty: BUHANIKA, county: BUGAHYA COUNTY, district: HOIMA,
+  //   region: WESTERN, subRegion: BUNYORO)
 
   print(await ug.getPath('KASAMBYA I'));
   // "HOIMA → BUHANIKA → KATEREIGA → KASAMBYA I"
@@ -52,7 +53,7 @@ Future<void> main() async {
   }
   ```
 
-- **Web**: not supported. `sqflite` has no built-in web backend; see [`sqflite_common_ffi_web`](https://pub.dev/packages/sqflite_common_ffi_web) (untested here) or use the original [TypeScript package](https://github.com/NatumanyaGuy/ug-locations) for web.
+- **Web**: works out of the box — no setup needed. `sqflite` has no built-in web backend, so on web the package transparently switches to a `sqlite3`-wasm backend instead, loading the bundled database into an in-memory filesystem on each page load.
 
 ## Usage
 
@@ -74,12 +75,34 @@ for (final loc in results) {
 
 Common patterns this API supports: cascading district → subcounty → parish → village selectors, and village-name input validation via `getLocationByVillage(name) != null`. See `example/lib/main.dart` for a full working Flutter app with both.
 
+### Region and sub-region (optional)
+
+Every `UgandaLocation` also carries `region` and `subRegion`, and three lookup methods let you drive a region-first cascade if you want one:
+
+```dart
+final regions = await ug.getRegions(); // WESTERN, CENTRAL, EASTERN, NORTHERN
+final subRegions = await ug.getSubRegionsInRegion('WESTERN'); // BUNYORO, ANKOLE, ...
+final districts = await ug.getDistrictsInSubRegion('BUNYORO'); // HOIMA, ...
+```
+
+`LocationPicker` stays a 4-level District → Subcounty → Parish → Village picker by default; pass `includeRegionHierarchy: true` to prepend Region and Sub-region dropdowns:
+
+```dart
+LocationPicker(
+  includeRegionHierarchy: true,
+  onSelected: (location) => print(location.village),
+)
+```
+
 ## API Reference
 
 | Method | Returns | Description |
 | --- | --- | --- |
 | `UgandaLocations.getInstance()` | `Future<UgandaLocations>` | Opens (and caches) the shared database instance |
-| `getDistricts()` | `Future<List<String>>` | Returns all 145 districts |
+| `getDistricts()` | `Future<List<String>>` | Returns all 146 districts |
+| `getRegions()` | `Future<List<String>>` | Returns all 4 regions |
+| `getSubRegionsInRegion(region)` | `Future<List<String>>` | Sub-regions in a region |
+| `getDistrictsInSubRegion(subRegion)` | `Future<List<String>>` | Districts in a sub-region |
 | `getLocationByVillage(village)` | `Future<UgandaLocation?>` | Full hierarchy for a village |
 | `getPath(village)` | `Future<String?>` | Formatted path: "District → Subcounty → Parish → Village" |
 | `search(query, {limit = 50})` | `Future<List<UgandaLocation>>` | Search across all levels, ranked by relevance |
@@ -95,8 +118,10 @@ class UgandaLocation {
   final String village;
   final String parish;
   final String subcounty;
-  final String? constituency;
+  final String? county;
   final String district;
+  final String? region;
+  final String? subRegion;
 }
 
 class UgandaLocationParent {
@@ -108,13 +133,15 @@ class UgandaLocationParent {
 
 ## Data
 
-145 districts, 55,000+ villages, sourced from the [Uganda Electoral Commission Administrative Units PDF (July 2022)](https://www.ec.or.ug/election/administrative-units-uganda-july-2022).
+146 districts, 52,000+ unique villages across 71,000+ administrative records, covering the full village → parish → subcounty → county → district → sub-region → region hierarchy. Sourced from the [`uganda`](https://github.com/kakandemanwell/uganda) npm package's dataset (also browsable at [uganda-omega.vercel.app](https://uganda-omega.vercel.app/)).
 
-**Data freshness**: this is a static snapshot of the July 2022 list. There is no automatic update mechanism today, so administrative changes since then (new districts, renamed or split units, etc.) are not reflected. If you need current boundaries, cross-check against the Electoral Commission's latest publication.
+**Data freshness**: this replaces the package's original static snapshot of the July 2022 Electoral Commission list (145 districts, no region/sub-region data). Regenerating the bundled database from a newer source is a two-step, manual process — see `skills/ug_locations/SKILL.md` — there is still no automatic update mechanism. If you need data fresher than what's bundled here, check whether [`uganda`](https://github.com/kakandemanwell/uganda)/[uganda-omega.vercel.app](https://uganda-omega.vercel.app/) has since published an update.
 
 ## Acknowledgments
 
-Dart/Flutter port of the [`ug-locations`](https://github.com/NatumanyaGuy/ug-locations) npm package by Natumanya Guy, reimplemented with a SQLite-backed storage layer. JSON data extract courtesy of [@gxnsamuel](https://github.com/gxnsamuel/UG-AU-DS-2022).
+- Dart/Flutter port of the [`ug-locations`](https://github.com/NatumanyaGuy/ug-locations) npm package by Natumanya Guy, reimplemented with a SQLite-backed storage layer.
+- Administrative-unit data from the [`uganda`](https://github.com/kakandemanwell/uganda) npm package by [kakandemanwell](https://github.com/kakandemanwell) ([uganda-omega.vercel.app](https://uganda-omega.vercel.app/)) — also a good source to check for more current data than what's bundled here.
+
 
 ## Contributing
 

@@ -7,8 +7,10 @@ void main() {
       village: 'KASAMBYA I',
       parish: 'KATEREIGA',
       subcounty: 'BUHANIKA',
-      constituency: 'BUGAHYA COUNTY',
+      county: 'BUGAHYA COUNTY',
       district: 'HOIMA',
+      region: 'WESTERN',
+      subRegion: 'BUNYORO',
     );
 
     test('toMap/fromMap round-trips', () {
@@ -19,14 +21,14 @@ void main() {
       expect(UgandaLocation.fromJson(loc.toJson()), loc);
     });
 
-    test('round-trips a null constituency', () {
-      const noConstituency = UgandaLocation(
+    test('round-trips null county/region/subRegion', () {
+      const noExtras = UgandaLocation(
         village: 'KASAMBYA I',
         parish: 'KATEREIGA',
         subcounty: 'BUHANIKA',
         district: 'HOIMA',
       );
-      expect(UgandaLocation.fromJson(noConstituency.toJson()), noConstituency);
+      expect(UgandaLocation.fromJson(noExtras.toJson()), noExtras);
     });
   });
 

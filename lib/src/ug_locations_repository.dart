@@ -5,7 +5,8 @@ import 'ug_location.dart';
 import 'ug_locations_database.dart';
 
 /// Lookup and search API for Uganda's administrative-unit hierarchy
-/// (village -> parish -> subcounty -> constituency -> district), backed by
+/// (village -> parish -> subcounty -> county -> district -> sub-region ->
+/// region), backed by
 /// a bundled SQLite database.
 ///
 /// Obtain the shared instance with [UgandaLocations.getInstance]:
@@ -54,6 +55,37 @@ class UgandaLocations {
     final List<Map<String, Object?>> rows = await _db.query(
       'districts',
       columns: <String>['name'],
+      orderBy: 'id',
+    );
+    return rows.map((Map<String, Object?> row) => row['name']! as String).toList();
+  }
+
+  /// Returns all regions, sorted alphabetically.
+  Future<List<String>> getRegions() async {
+    final List<Map<String, Object?>> rows = await _db.rawQuery(
+      'SELECT DISTINCT region FROM districts ORDER BY region ASC',
+    );
+    return rows.map((Map<String, Object?> row) => row['region']! as String).toList();
+  }
+
+  /// Returns all sub-regions in the given region (case-insensitive), sorted
+  /// alphabetically.
+  Future<List<String>> getSubRegionsInRegion(String region) async {
+    final List<Map<String, Object?>> rows = await _db.rawQuery(
+      'SELECT DISTINCT sub_region FROM districts WHERE region = ? ORDER BY sub_region ASC',
+      <String>[region.toUpperCase().trim()],
+    );
+    return rows.map((Map<String, Object?> row) => row['sub_region']! as String).toList();
+  }
+
+  /// Returns all districts in the given sub-region (case-insensitive), in
+  /// their source order.
+  Future<List<String>> getDistrictsInSubRegion(String subRegion) async {
+    final List<Map<String, Object?>> rows = await _db.query(
+      'districts',
+      columns: <String>['name'],
+      where: 'sub_region = ?',
+      whereArgs: <String>[subRegion.toUpperCase().trim()],
       orderBy: 'id',
     );
     return rows.map((Map<String, Object?> row) => row['name']! as String).toList();

@@ -17,9 +17,9 @@ void main() {
     ug = await UgandaLocations.getInstance();
   });
 
-  test('getDistricts returns all 145 districts', () async {
+  test('getDistricts returns all 146 districts', () async {
     final districts = await ug.getDistricts();
-    expect(districts.length, 145);
+    expect(districts.length, 146);
     expect(districts, contains('HOIMA'));
   });
 
