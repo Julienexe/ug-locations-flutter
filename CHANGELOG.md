@@ -1,7 +1,8 @@
 ## 0.3.0
 
 - `LocationSearchField` gained `initialValue` to seed the field with existing text (e.g. a saved village when editing a record), `onTextChanged` to receive free text that doesn't match any suggestion, and an opt-in `debounceDuration` to delay searches until typing pauses instead of querying on every keystroke.
-- Added `LocationSearchField.ug` (a resolved `UgandaLocations?` instance) as the recommended way to inject a specific instance, e.g. in tests. `locations` (a `Future<UgandaLocations>?`) is deprecated in its favor but still works.
+- `LocationPicker` gained `initialLocation` to pre-select every dropdown (Region/Sub-region through Village) for the same edit-existing-record case, loading each level's options so the seeded value is valid. Doesn't fire `onSelected` for it since the caller already has the value.
+- Added `ug` (a resolved `UgandaLocations?` instance) to both `LocationSearchField` and `LocationPicker` as the recommended way to inject a specific instance, e.g. in tests. `locations` (a `Future<UgandaLocations>?`) is deprecated in its favor but still works.
 - Fixed: `LocationSearchField` now shows a loading indicator under the field while its `UgandaLocations` instance is still resolving, instead of looking like there are simply no matches.
 
 ## 0.2.1

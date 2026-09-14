@@ -115,6 +115,15 @@ LocationPicker(
 
 ![LocationPicker, with region hierarchy](https://raw.githubusercontent.com/Julienexe/ug-locations-flutter/master/doc/screenshots/location_picker-true.jpg)
 
+Pass `initialLocation` to pre-select every dropdown, e.g. when editing a record that already has a saved location. Each level's options are loaded so the seeded value is valid; `onSelected` is not called for it, since the caller already has the value:
+
+```dart
+LocationPicker(
+  onSelected: (location) => print(location.village),
+  initialLocation: existingLocation, // a UgandaLocation
+)
+```
+
 ### LocationSearchField
 
 A text field that searches villages, parishes, subcounties, and districts as the user types (via `UgandaLocations.search`), showing a ranked suggestions list to pick from.
@@ -147,7 +156,7 @@ LocationSearchField(
 )
 ```
 
-> **Migrating from earlier versions**: the `locations: Future<UgandaLocations>?` param is deprecated in favor of `ug: UgandaLocations?`, which takes an already-resolved instance instead of a future — a more conventional shape for dependency injection. `locations` still works but will be removed in a future release.
+> **Migrating from earlier versions**: on both widgets, the `locations: Future<UgandaLocations>?` param is deprecated in favor of `ug: UgandaLocations?`, which takes an already-resolved instance instead of a future — a more conventional shape for dependency injection. `locations` still works but will be removed in a future release.
 
 ## API Reference
 

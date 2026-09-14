@@ -124,4 +124,87 @@ void main() {
       expect(selected!.subRegion, 'BUNYORO');
     },
   );
+
+  testWidgets('ug param works as a resolved-instance alternative to locations', (tester) async {
+    await tester.pumpWidget(
+      MaterialApp(home: Scaffold(body: LocationPicker(ug: ug, onSelected: (_) {}))),
+    );
+    await tester.pump();
+    await pumpUntilFound(tester, find.widgetWithText(DropdownButtonFormField<String>, 'District'));
+
+    expect(find.widgetWithText(DropdownButtonFormField<String>, 'District'), findsOneWidget);
+  });
+
+  testWidgets('initialLocation seeds every dropdown without firing onSelected', (tester) async {
+    UgandaLocation? selected;
+    final UgandaLocation? initial = await ug.getLocationByVillage('KASAMBYA I');
+    expect(initial, isNotNull);
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: LocationPicker(
+            ug: ug,
+            initialLocation: initial,
+            onSelected: (loc) => selected = loc,
+          ),
+        ),
+      ),
+    );
+    await tester.pump();
+    await pumpUntilFound(
+      tester,
+      find.widgetWithText(DropdownButtonFormField<String>, 'Village'),
+    );
+    await tester.pump(const Duration(milliseconds: 300));
+
+    String? valueFor(String label) {
+      final finder = find.widgetWithText(DropdownButtonFormField<String>, label);
+      final dropdown = tester.widget<DropdownButtonFormField<String>>(finder);
+      return dropdown.initialValue;
+    }
+
+    expect(valueFor('District'), 'HOIMA');
+    expect(valueFor('Subcounty'), 'BUHANIKA');
+    expect(valueFor('Parish'), 'KATEREIGA');
+    expect(valueFor('Village'), 'KASAMBYA I');
+    expect(selected, isNull);
+  });
+
+  testWidgets('initialLocation seeds Region/Sub-region too when includeRegionHierarchy is set', (
+    tester,
+  ) async {
+    final UgandaLocation? initial = await ug.getLocationByVillage('KASAMBYA I');
+    expect(initial, isNotNull);
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: LocationPicker(
+            ug: ug,
+            includeRegionHierarchy: true,
+            initialLocation: initial,
+            onSelected: (_) {},
+          ),
+        ),
+      ),
+    );
+    await tester.pump();
+    await pumpUntilFound(
+      tester,
+      find.widgetWithText(DropdownButtonFormField<String>, 'Village'),
+    );
+    await tester.pump(const Duration(milliseconds: 300));
+
+    String? valueFor(String label) {
+      final finder = find.widgetWithText(DropdownButtonFormField<String>, label);
+      final dropdown = tester.widget<DropdownButtonFormField<String>>(finder);
+      return dropdown.initialValue;
+    }
+
+    expect(valueFor('Region'), 'WESTERN');
+    expect(valueFor('Sub-region'), 'BUNYORO');
+    expect(valueFor('District'), 'HOIMA');
+    expect(valueFor('Village'), 'KASAMBYA I');
+  });
 }

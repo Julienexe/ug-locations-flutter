@@ -8,8 +8,8 @@ import '../ug_locations_repository.dart';
 /// region -> sub-region levels above district.
 ///
 /// By default it opens the shared [UgandaLocations] instance (via
-/// [UgandaLocations.getInstance]); pass [locations] to inject a specific
-/// instance instead, e.g. in tests.
+/// [UgandaLocations.getInstance]); pass [ug] to inject a specific instance
+/// instead, e.g. in tests.
 ///
 /// ```dart
 /// LocationPicker(
@@ -21,15 +21,22 @@ class LocationPicker extends StatefulWidget {
   const LocationPicker({
     super.key,
     required this.onSelected,
-    this.locations,
+    this.ug,
+    @Deprecated('Use ug instead') this.locations,
     this.includeRegionHierarchy = false,
+    this.initialLocation,
   });
 
   /// Called with the full hierarchy once the user has selected a village.
+  /// Not called when [initialLocation] seeds the picker's dropdowns.
   final ValueChanged<UgandaLocation> onSelected;
 
   /// The [UgandaLocations] instance to query. Defaults to the shared
   /// singleton from [UgandaLocations.getInstance].
+  final UgandaLocations? ug;
+
+  /// Deprecated alternative to [ug] that takes a not-yet-resolved future.
+  @Deprecated('Use ug instead')
   final Future<UgandaLocations>? locations;
 
   /// Whether to prepend Region and Sub-region dropdowns above District,
@@ -37,6 +44,12 @@ class LocationPicker extends StatefulWidget {
   /// `false`, which keeps the picker to its original four levels (District
   /// -> Subcounty -> Parish -> Village).
   final bool includeRegionHierarchy;
+
+  /// A location to pre-select the dropdowns with, e.g. a previously saved
+  /// value when editing an existing record. Each level's options are loaded
+  /// so the seeded value is valid to show; [onSelected] is not called for it
+  /// since the caller already has it.
+  final UgandaLocation? initialLocation;
 
   @override
   State<LocationPicker> createState() => _LocationPickerState();
@@ -66,7 +79,9 @@ class _LocationPickerState extends State<LocationPicker> {
   }
 
   Future<void> _init() async {
-    final UgandaLocations ug = await (widget.locations ?? UgandaLocations.getInstance());
+    final UgandaLocations ug =
+        // ignore: deprecated_member_use_from_same_package
+        widget.ug ?? await (widget.locations ?? UgandaLocations.getInstance());
     if (widget.includeRegionHierarchy) {
       final List<String> regions = await ug.getRegions();
       if (!mounted) return;
@@ -74,13 +89,66 @@ class _LocationPickerState extends State<LocationPicker> {
         _ug = ug;
         _regions = regions;
       });
-      return;
+    } else {
+      final List<String> districts = await ug.getDistricts();
+      if (!mounted) return;
+      setState(() {
+        _ug = ug;
+        _districts = districts;
+      });
     }
-    final List<String> districts = await ug.getDistricts();
+    final UgandaLocation? initial = widget.initialLocation;
+    if (initial != null) {
+      await _seedInitial(ug, initial);
+    }
+  }
+
+  /// Loads each level's options for [initial] and sets it as the current
+  /// selection at every level, without firing [LocationPicker.onSelected].
+  Future<void> _seedInitial(UgandaLocations ug, UgandaLocation initial) async {
+    String? region;
+    String? subRegion;
+    List<String> subRegions = _subRegions;
+    List<String> districts = _districts;
+
+    if (widget.includeRegionHierarchy && initial.region != null) {
+      region = initial.region;
+      subRegions = await ug.getSubRegionsInRegion(region!);
+      subRegion = initial.subRegion;
+      if (subRegion != null) {
+        districts = await ug.getDistrictsInSubRegion(subRegion);
+      }
+    }
+    // Fall back to the full district list so the seeded district is always a
+    // valid dropdown item, even without region info to scope it by.
+    if (!districts.contains(initial.district)) {
+      districts = await ug.getDistricts();
+    }
+
+    final List<String> subcounties = await ug.getSubcountiesInDistrict(initial.district);
+    final List<String> parishes = await ug.getParishesInSubcounty(
+      initial.district,
+      initial.subcounty,
+    );
+    final List<String> villages = await ug.getVillagesInParish(
+      initial.district,
+      initial.subcounty,
+      initial.parish,
+    );
+
     if (!mounted) return;
     setState(() {
-      _ug = ug;
+      _region = region;
+      _subRegion = subRegion;
+      _subRegions = subRegions;
       _districts = districts;
+      _district = initial.district;
+      _subcounties = subcounties;
+      _subcounty = initial.subcounty;
+      _parishes = parishes;
+      _parish = initial.parish;
+      _villages = villages;
+      _village = initial.village;
     });
   }
 

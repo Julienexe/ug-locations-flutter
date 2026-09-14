@@ -172,6 +172,8 @@ class _HomePageState extends State<HomePage> {
           const SizedBox(height: 8),
           LocationSearchField(
             onSelected: (loc) => setState(() => _searchFieldSelection = loc),
+            initialValue: const TextEditingValue(text: 'KASAMBYA I'),
+            debounceDuration: const Duration(milliseconds: 300),
           ),
           const SizedBox(height: 8),
           _SelectionSummary(location: _searchFieldSelection),
@@ -193,6 +195,7 @@ class _HomePageState extends State<HomePage> {
           LocationPicker(
             key: ValueKey(_includeRegionHierarchy),
             includeRegionHierarchy: _includeRegionHierarchy,
+            initialLocation: _pickerSelection,
             onSelected: (loc) => setState(() => _pickerSelection = loc),
           ),
           const SizedBox(height: 8),
