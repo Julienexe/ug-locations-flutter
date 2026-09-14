@@ -90,7 +90,7 @@ final districts = await ug.getDistrictsInSubRegion('BUNYORO'); // HOIMA, ...
 
 ## Widgets
 
-Two ready-made Flutter widgets ship alongside the lookup API, so you don't have to hand-roll cascading dropdowns or an autocomplete field yourself. Both are exported from the same `package:ug_locations/ug_locations.dart` import used above — no separate import needed. Both open the shared `UgandaLocations` instance automatically (via `UgandaLocations.getInstance()`); pass `locations: someFuture` to inject a specific instance instead, e.g. in tests.
+Two ready-made Flutter widgets ship alongside the lookup API, so you don't have to hand-roll cascading dropdowns or an autocomplete field yourself. Both are exported from the same `package:ug_locations/ug_locations.dart` import used above — no separate import needed. Both open the shared `UgandaLocations` instance automatically (via `UgandaLocations.getInstance()`); pass `ug: someInstance` to inject a specific instance instead, e.g. in tests.
 
 ### LocationPicker
 
@@ -127,6 +127,27 @@ LocationSearchField(
 ```
 
 ![LocationSearchField suggestions](https://raw.githubusercontent.com/Julienexe/ug-locations-flutter/master/doc/screenshots/search_field.jpg)
+
+Additional params for common cases:
+
+```dart
+LocationSearchField(
+  onSelected: (location) => print(location.village),
+
+  // Seed the field with a saved value, e.g. when editing an existing record.
+  initialValue: const TextEditingValue(text: 'KASAMBYA I'),
+
+  // Manual fallback for free text that doesn't match any suggestion
+  // (real gap for rural/offline data not yet in the dataset).
+  onTextChanged: (text) => print('typed: $text'),
+
+  // Delay searches until typing pauses, instead of querying on every
+  // keystroke. Defaults to null (no debounce).
+  debounceDuration: const Duration(milliseconds: 300),
+)
+```
+
+> **Migrating from earlier versions**: the `locations: Future<UgandaLocations>?` param is deprecated in favor of `ug: UgandaLocations?`, which takes an already-resolved instance instead of a future — a more conventional shape for dependency injection. `locations` still works but will be removed in a future release.
 
 ## API Reference
 

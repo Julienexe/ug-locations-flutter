@@ -60,4 +60,83 @@ void main() {
     expect(selected!.village, 'KASAMBYA I');
     expect(selected!.district, 'HOIMA');
   });
+
+  testWidgets('ug param works as a resolved-instance alternative to locations', (tester) async {
+    UgandaLocation? selected;
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(body: LocationSearchField(ug: ug, onSelected: (loc) => selected = loc)),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.enterText(find.byType(TextFormField), 'KASAMBYA I');
+    await tester.pumpAndSettle();
+
+    expect(find.text('KASAMBYA I'), findsWidgets);
+
+    await tester.testTextInput.receiveAction(TextInputAction.done);
+    await tester.pumpAndSettle();
+
+    expect(selected?.village, 'KASAMBYA I');
+  });
+
+  testWidgets('initialValue seeds the field text', (tester) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: LocationSearchField(
+            ug: ug,
+            onSelected: (_) {},
+            initialValue: const TextEditingValue(text: 'KASAMBYA I'),
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('KASAMBYA I'), findsOneWidget);
+  });
+
+  testWidgets('onTextChanged fires for free text that matches nothing', (tester) async {
+    final typed = <String>[];
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: LocationSearchField(ug: ug, onSelected: (_) {}, onTextChanged: typed.add),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.enterText(find.byType(TextFormField), 'NOT A REAL VILLAGE XYZ');
+    await tester.pumpAndSettle();
+
+    expect(typed, contains('NOT A REAL VILLAGE XYZ'));
+  });
+
+  testWidgets('debounceDuration delays the search until typing pauses', (tester) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: LocationSearchField(
+            ug: ug,
+            onSelected: (_) {},
+            debounceDuration: const Duration(milliseconds: 300),
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.enterText(find.byType(TextFormField), 'KASAMBYA I');
+    // Before the debounce window elapses, no suggestions should appear yet.
+    await tester.pump(const Duration(milliseconds: 100));
+    expect(find.widgetWithText(ListTile, 'KASAMBYA I'), findsNothing);
+
+    // Once the debounce window elapses, suggestions show up.
+    await tester.pump(const Duration(milliseconds: 250));
+    await tester.pumpAndSettle();
+    expect(find.widgetWithText(ListTile, 'KASAMBYA I'), findsWidgets);
+  });
 }
