@@ -21,6 +21,8 @@ Search villages, get complete administrative paths, and traverse village → par
 flutter pub add ug_locations
 ```
 
+> **Migrating from 0.1.x**: `UgandaLocation.constituency` was renamed to `county` in 0.2.0 and now comes from a different data source (a county, not an electoral constituency) — update field access, there's no compatibility shim.
+
 ## Quick Start
 
 ```dart
@@ -88,7 +90,7 @@ final districts = await ug.getDistrictsInSubRegion('BUNYORO'); // HOIMA, ...
 
 ## Widgets
 
-Two ready-made Flutter widgets ship alongside the lookup API, so you don't have to hand-roll cascading dropdowns or an autocomplete field yourself. Both open the shared `UgandaLocations` instance automatically (via `UgandaLocations.getInstance()`); pass `locations: someFuture` to inject a specific instance instead, e.g. in tests.
+Two ready-made Flutter widgets ship alongside the lookup API, so you don't have to hand-roll cascading dropdowns or an autocomplete field yourself. Both are exported from the same `package:ug_locations/ug_locations.dart` import used above — no separate import needed. Both open the shared `UgandaLocations` instance automatically (via `UgandaLocations.getInstance()`); pass `locations: someFuture` to inject a specific instance instead, e.g. in tests.
 
 ### LocationPicker
 
