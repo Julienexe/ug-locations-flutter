@@ -1,3 +1,9 @@
+## 0.3.0
+
+- `LocationSearchField` gained `initialValue` to seed the field with existing text (e.g. a saved village when editing a record), `onTextChanged` to receive free text that doesn't match any suggestion, and an opt-in `debounceDuration` to delay searches until typing pauses instead of querying on every keystroke.
+- Added `LocationSearchField.ug` (a resolved `UgandaLocations?` instance) as the recommended way to inject a specific instance, e.g. in tests. `locations` (a `Future<UgandaLocations>?`) is deprecated in its favor but still works.
+- Fixed: `LocationSearchField` now shows a loading indicator under the field while its `UgandaLocations` instance is still resolving, instead of looking like there are simply no matches.
+
 ## 0.2.1
 - Fixed screenshot rendering in package readme
 
